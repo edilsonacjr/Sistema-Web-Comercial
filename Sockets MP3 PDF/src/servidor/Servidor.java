@@ -2,8 +2,8 @@ package servidor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,7 +40,15 @@ public class Servidor {
                 saida = new DataOutputStream(connection.getOutputStream());
                 entrada = new DataInputStream(connection.getInputStream());
                 saida.flush();
-                
+
+                String task = entrada.readUTF();
+                switch (task) {
+                    case "receive":
+                        receiveData();
+                        break;
+                    case "send":
+                        break;
+                }
                 receiveData();
 
                 System.out.println("Pegando streans de entrada e saída");
@@ -50,7 +58,7 @@ public class Servidor {
                 ++contador;
 
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
 
         }
     }
@@ -66,12 +74,25 @@ public class Servidor {
         do {
             out.write(check = entrada.read());
         } while (check != -1);
+        out.close();
     }
 
-    public void sendData(byte[] buf, String nome) throws IOException {
+    public void sendData() throws IOException {
+
+        String nome = entrada.readUTF();
+
+        File fileName = new File(nome);
+
+        FileInputStream io = new FileInputStream(fileName);
+        byte[] buf = new byte[io.available()];
+        int test = io.read(buf);
+
         saida.writeUTF(nome);
+        saida.flush();
         saida.write(buf);
         saida.flush();
+
+        io.close();
     }
 
     public static void main(String args[]) {
