@@ -3,8 +3,24 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package cliente;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /**
  *
@@ -12,11 +28,77 @@ package cliente;
  */
 public class PrincipalView extends javax.swing.JFrame {
 
+    private DataOutputStream saida;
+    private DataInputStream entrada;
+    private Socket cliente;
+    private final String IP = "127.0.0.1";
+    private final int porta = 5000;
+
     /**
      * Creates new form PrincipalView
      */
     public PrincipalView() {
         initComponents();
+        try {
+            cliente = new Socket(InetAddress.getByName(IP), porta);
+            saida = new DataOutputStream(cliente.getOutputStream());
+            entrada = new DataInputStream(cliente.getInputStream());
+            saida.flush();
+            receiveList();
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void sendData(File fileName) throws FileNotFoundException, IOException {
+
+        FileInputStream io = new FileInputStream(fileName);
+        int tam = io.available();
+
+        byte[] buf = new byte[io.available()];
+        String nome = fileName.toString();
+        nome = nome.substring(nome.lastIndexOf("/") + 1);
+        int test = io.read(buf);
+
+        try {
+            saida.writeUTF("receive");
+            saida.flush();
+            saida.writeUTF(nome);
+            saida.flush();
+            saida.writeInt(tam);
+            saida.flush();
+            saida.write(buf);
+            saida.flush();
+        } catch (IOException cnfex) {
+        }
+        io.close();
+    }
+
+    private void receiveList() throws IOException {
+        saida.writeUTF("list");
+        saida.flush();
+        int tam = entrada.readInt();
+
+        DefaultTableModel dtm = (DefaultTableModel) jtbArquivo.getModel();
+        dtm.setRowCount(0);
+
+        for (int i = 0; i < tam; i++) {
+            String nome = entrada.readUTF();
+            dtm.addRow(new Object[]{nome});
+        }
+    }
+
+    public void receiveData(File fileName) throws FileNotFoundException, IOException {
+        String nome = entrada.readUTF();
+
+        //fileName = new File("saida/" + nome);
+        int tam = entrada.readInt();
+
+        FileOutputStream out = new FileOutputStream(fileName + "/" + nome);
+        do {
+            out.write(entrada.read());
+        } while (tam-- > 1);
+        out.close();
     }
 
     /**
@@ -34,6 +116,8 @@ public class PrincipalView extends javax.swing.JFrame {
         jbtExportar = new javax.swing.JButton();
         jbtAbrir = new javax.swing.JButton();
         jbtSair = new javax.swing.JButton();
+        jlCarregando = new javax.swing.JLabel();
+        jbtAbrir1 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jmiImportar = new javax.swing.JMenuItem();
@@ -41,6 +125,7 @@ public class PrincipalView extends javax.swing.JFrame {
         jmiSair = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Sockets - Servidor de Arquivos");
 
         jtbArquivo.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -68,8 +153,18 @@ public class PrincipalView extends javax.swing.JFrame {
         jScrollPane1.setViewportView(jtbArquivo);
 
         jbtImportar.setText("Importar");
+        jbtImportar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtImportarActionPerformed(evt);
+            }
+        });
 
         jbtExportar.setText("Exportar");
+        jbtExportar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtExportarActionPerformed(evt);
+            }
+        });
 
         jbtAbrir.setText("Abrir");
 
@@ -77,6 +172,13 @@ public class PrincipalView extends javax.swing.JFrame {
         jbtSair.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jbtSairActionPerformed(evt);
+            }
+        });
+
+        jbtAbrir1.setText("Atualizar");
+        jbtAbrir1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtAbrir1ActionPerformed(evt);
             }
         });
 
@@ -106,10 +208,12 @@ public class PrincipalView extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jbtImportar, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jbtExportar, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jbtAbrir, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jbtAbrir, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jbtAbrir1, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jlCarregando, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jbtSair, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -123,19 +227,104 @@ public class PrincipalView extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jbtExportar)
                         .addGap(18, 18, 18)
-                        .addComponent(jbtAbrir))
+                        .addComponent(jbtAbrir)
+                        .addGap(18, 18, 18)
+                        .addComponent(jbtAbrir1))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jbtSair)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jbtSair)
+                        .addContainerGap())
+                    .addComponent(jlCarregando, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void jbtSairActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtSairActionPerformed
+        try {
+            saida.writeUTF("sair");
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            entrada.close();
+            saida.close();
+            cliente.close();
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         System.exit(0);
     }//GEN-LAST:event_jbtSairActionPerformed
+
+    private void jbtImportarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtImportarActionPerformed
+        File fileName;
+        JFileChooser dialogo = new JFileChooser();
+        dialogo.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int result = dialogo.showOpenDialog(this);
+        if (result == JFileChooser.CANCEL_OPTION) {
+            return;
+        }
+
+        fileName = dialogo.getSelectedFile();
+
+        if (fileName == null || fileName.getName().equals("")) {
+            JOptionPane.showMessageDialog(this, "Nome de Arquivo Inválido",
+                    "Nome de Arquivo Inválido", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        jlCarregando.setText("Carregando arquivo...");
+        jbtImportar.setEnabled(false);
+        try {
+            sendData(fileName);
+            receiveList();
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        jlCarregando.setText("Carregado.");
+        jbtImportar.setEnabled(true);
+
+
+    }//GEN-LAST:event_jbtImportarActionPerformed
+
+    private void jbtAbrir1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtAbrir1ActionPerformed
+        try {
+            receiveList();
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jbtAbrir1ActionPerformed
+
+    private void jbtExportarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtExportarActionPerformed
+        try {
+            saida.writeUTF("send");
+            DefaultTableModel dtm = (DefaultTableModel) jtbArquivo.getModel();
+            String item = (String) dtm.getValueAt(jtbArquivo.getSelectedRow(), 0);
+            saida.writeUTF(item);
+
+            File fileName;
+            JFileChooser dialogo = new JFileChooser();
+            dialogo.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int result = dialogo.showOpenDialog(this);
+            if (result == JFileChooser.CANCEL_OPTION) {
+                return;
+            }
+
+            fileName = dialogo.getSelectedFile();
+
+            if (fileName == null || fileName.getName().equals("")) {
+                JOptionPane.showMessageDialog(this, "Diretório Inválido",
+                        "Diretório Inválido", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            receiveData(fileName);
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jbtExportarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -177,9 +366,11 @@ public class PrincipalView extends javax.swing.JFrame {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton jbtAbrir;
+    private javax.swing.JButton jbtAbrir1;
     private javax.swing.JButton jbtExportar;
     private javax.swing.JButton jbtImportar;
     private javax.swing.JButton jbtSair;
+    private javax.swing.JLabel jlCarregando;
     private javax.swing.JMenuItem jmiExportar;
     private javax.swing.JMenuItem jmiImportar;
     private javax.swing.JMenuItem jmiSair;

@@ -40,58 +40,83 @@ public class Servidor {
                 saida = new DataOutputStream(connection.getOutputStream());
                 entrada = new DataInputStream(connection.getInputStream());
                 saida.flush();
-
-                String task = entrada.readUTF();
-                switch (task) {
-                    case "receive":
-                        receiveData();
-                        break;
-                    case "send":
-                        break;
-                }
-                receiveData();
-
-                System.out.println("Pegando streans de entrada e saída");
+                String task;
+                do {
+                    task = entrada.readUTF();
+                    switch (task) {
+                        case "receive":
+                            receiveData();
+                            break;
+                        case "send":
+                            sendData();
+                            break;
+                        case "list":
+                            sendList();
+                            break;
+                    }
+                } while (!"sair".equals(task));
 
                 System.out.println("FIM DE CONEXÃO COM CLIENTE "
                         + connection.getInetAddress().getHostName());
                 ++contador;
-
             }
         } catch (IOException e) {
+        }
+    }
 
+    public void sendList() throws IOException {
+        File arquivo = new File("dir");
+
+        File[] files = arquivo.listFiles();
+
+        saida.writeInt(files.length);
+        saida.flush();
+        for (File f : files) {
+            String nome = f.toString();
+            nome = nome.substring(nome.lastIndexOf("/") + 1);
+            saida.writeUTF(nome);
+            saida.flush();
         }
     }
 
     public void receiveData() throws FileNotFoundException, IOException {
-        int check = 0;
+        int check;
         File fileName;
 
         String nome = entrada.readUTF();
-        fileName = new File(nome);
+        fileName = new File("dir/" + nome);
+
+        int tam = entrada.readInt();
 
         FileOutputStream out = new FileOutputStream(fileName);
         do {
             out.write(check = entrada.read());
-        } while (check != -1);
+        } while (tam-- > 1);
         out.close();
     }
 
     public void sendData() throws IOException {
-
         String nome = entrada.readUTF();
-
-        File fileName = new File(nome);
+        
+        File fileName = new File("dir/"+nome);
 
         FileInputStream io = new FileInputStream(fileName);
+        
+        int tam = io.available();
+
         byte[] buf = new byte[io.available()];
+
         int test = io.read(buf);
 
-        saida.writeUTF(nome);
-        saida.flush();
-        saida.write(buf);
-        saida.flush();
-
+        try {
+            saida.writeUTF(nome);
+            saida.flush();
+            saida.writeInt(tam);
+            saida.flush();
+            saida.write(buf);
+            saida.flush();
+        } catch (IOException cnfex) {
+        }
         io.close();
     }
 
