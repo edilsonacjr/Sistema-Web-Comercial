@@ -91,7 +91,6 @@ public class PrincipalView extends javax.swing.JFrame {
     public void receiveData(File fileName) throws FileNotFoundException, IOException {
         String nome = entrada.readUTF();
 
-        //fileName = new File("saida/" + nome);
         int tam = entrada.readInt();
 
         FileOutputStream out = new FileOutputStream(fileName + "/" + nome);
