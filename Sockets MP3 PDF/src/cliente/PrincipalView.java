@@ -5,6 +5,7 @@
  */
 package cliente;
 
+import java.awt.Desktop;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -100,6 +102,19 @@ public class PrincipalView extends javax.swing.JFrame {
         out.close();
     }
 
+    public void openArchive() throws IOException {
+            String nome = entrada.readUTF();
+            int tam = entrada.readInt();
+            File arquivo = File.createTempFile(nome, null);
+            FileOutputStream out = new FileOutputStream(arquivo);
+            do {
+                out.write(entrada.read());
+            } while (tam-- > 1);
+            out.close();
+            Desktop.getDesktop().open(arquivo);
+       
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -166,6 +181,11 @@ public class PrincipalView extends javax.swing.JFrame {
         });
 
         jbtAbrir.setText("Abrir");
+        jbtAbrir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtAbrirActionPerformed(evt);
+            }
+        });
 
         jbtSair.setText("Sair");
         jbtSair.addActionListener(new java.awt.event.ActionListener() {
@@ -302,7 +322,6 @@ public class PrincipalView extends javax.swing.JFrame {
             DefaultTableModel dtm = (DefaultTableModel) jtbArquivo.getModel();
             String item = (String) dtm.getValueAt(jtbArquivo.getSelectedRow(), 0);
             saida.writeUTF(item);
-
             File fileName;
             JFileChooser dialogo = new JFileChooser();
             dialogo.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -324,6 +343,21 @@ public class PrincipalView extends javax.swing.JFrame {
             Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jbtExportarActionPerformed
+
+    private void jbtAbrirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtAbrirActionPerformed
+        // TODO add your handling code here:
+        try {
+            saida.writeUTF("send");
+            DefaultTableModel dtm = (DefaultTableModel) jtbArquivo.getModel();
+            String item = (String) dtm.getValueAt(jtbArquivo.getSelectedRow(), 0);
+            saida.writeUTF(item);
+            openArchive();
+
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }//GEN-LAST:event_jbtAbrirActionPerformed
 
     /**
      * @param args the command line arguments
