@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  *
  * @author edilson
  */
-public class Servidor extends Thread{
+public class Servidor extends Thread {
 
     private ServerSocket servidor;
     private Socket connection;
@@ -31,27 +31,26 @@ public class Servidor extends Thread{
 
     public Servidor(int porta, int tamFila) throws IOException {
         servidor = new ServerSocket(porta, tamFila);
+        mensagem = "BEM VINDO";
         exec = Executors.newCachedThreadPool();
         execR = Executors.newCachedThreadPool();
     }
 
-    public void runServidor() {
+    public void runServidor() throws InterruptedException {
         try {
             while (true) {
                 System.out.println("Esperando Conexão...");
                 connection = servidor.accept();
                 System.out.println("Conexão  " + contador + " recebido de: "
                         + connection.getInetAddress().getHostName());
-                
+
                 exec.execute(new ThreadServidorEnvia(connection));
                 execR.execute(new ThreadServidorRecebe(connection));
-                
+
                 //saida = new DataOutputStream(connection.getOutputStream());
                 //entrada = new DataInputStream(connection.getInputStream());
                 //saida.flush();
                 //String task;
-
-
                 //System.out.println("FIM DE CONEXÃO COM CLIENTE "
                 //        + connection.getInetAddress().getHostName());
                 //++contador;
@@ -122,6 +121,8 @@ public class Servidor extends Thread{
             s = new Servidor(5000, 0);
             s.runServidor();
         } catch (IOException ex) {
+            Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
             Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

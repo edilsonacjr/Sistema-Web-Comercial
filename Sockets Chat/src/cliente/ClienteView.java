@@ -29,6 +29,7 @@ public class ClienteView extends javax.swing.JFrame {
      * Creates new form ClienteView
      */
     public ClienteView() {
+        initComponents();
         try {
             cliente = new Socket(InetAddress.getByName(IP), porta);
             saida = new DataOutputStream(cliente.getOutputStream());
@@ -39,7 +40,6 @@ public class ClienteView extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(ClienteView.class.getName()).log(Level.SEVERE, null, ex);
         }
-        initComponents();
     }
 
     /**

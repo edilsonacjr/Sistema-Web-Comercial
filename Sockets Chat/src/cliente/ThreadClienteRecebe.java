@@ -19,7 +19,6 @@ public class ThreadClienteRecebe extends Thread{
     public ThreadClienteRecebe(Socket connection) throws IOException{
         this.connection = connection;
         entrada = new DataInputStream(connection.getInputStream());
-        this.start();
     }
     
     public void run(){
