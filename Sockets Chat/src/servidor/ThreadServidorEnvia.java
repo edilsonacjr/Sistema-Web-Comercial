@@ -30,8 +30,8 @@ public class ThreadServidorEnvia implements Runnable{
             try {
                 saida.writeUTF(Servidor.mensagem);
                 saida.flush();
-                synchronized (this) {
-                    this.wait();                                        
+                synchronized (Servidor.exec) {
+                    Servidor.exec.wait();                                        
                 }
             } catch (IOException ex) {
                 Logger.getLogger(ThreadServidorEnvia.class.getName()).log(Level.SEVERE, null, ex);

@@ -31,7 +31,6 @@ public class ThreadServidorRecebe implements Runnable {
             try {
                 String texto = entrada.readUTF();
                 Servidor.mensagem += "\n" + texto;
-                System.out.println(texto);
                 synchronized (Servidor.exec) {
                     Servidor.exec.notifyAll();
                 }
