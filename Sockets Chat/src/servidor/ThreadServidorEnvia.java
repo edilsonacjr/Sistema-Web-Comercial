@@ -26,7 +26,7 @@ public class ThreadServidorEnvia implements Runnable{
     }
     
     public void run(){
-        while(true){
+        while(!connection.isClosed()){
             try {
                 saida.writeUTF(Servidor.mensagem);
                 saida.flush();

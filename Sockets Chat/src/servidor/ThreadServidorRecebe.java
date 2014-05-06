@@ -27,16 +27,27 @@ public class ThreadServidorRecebe implements Runnable {
     }
 
     public void run() {
-        while (true) {
+
+        while (!connection.isClosed()) {
             try {
                 String texto = entrada.readUTF();
-                Servidor.mensagem += "\n" + texto;
-                synchronized (Servidor.exec) {
-                    Servidor.exec.notifyAll();
+                if (texto.equals("sair")) {
+                    //System.out.println("TESTE SAIR");
+                    //Thread.currentThread().destroy();
+                    connection.close();
+                } else {
+                    Servidor.mensagem += "\n" + texto;
+                    synchronized (Servidor.exec) {
+                        Servidor.exec.notifyAll();
+                    }
                 }
             } catch (IOException ex) {
                 Logger.getLogger(ThreadServidorEnvia.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (Throwable ex) {
+                Logger.getLogger(ThreadServidorRecebe.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
     }
+
 }
