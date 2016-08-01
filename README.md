@@ -1,4 +1,5 @@
-sockets-mp3-pdf
+File Tranfer and Chat System (sockets-mp3-pdf)
 ===============
 
-Sistema de transferência de arquivos e chat construído em Java fazendo-se uso de Sockets.
+File transfer and chat system built in Java using Sockets.
+
